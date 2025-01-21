@@ -1,5 +1,6 @@
 ﻿using BudgetCalcAPI.Model;
 using BudgetCalcAPI.Model.Filter;
+using BudgetCalcAPI.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,12 @@ namespace BudgetCalcAPI.Controllers
 		[HttpGet]
 		public async Task<IActionResult> GetTransactions([FromQuery] TransactionFilter transactionFilter)
 		{
-			var query = _context.Transactions.AsQueryable();
+			var familyGroupUserIds = _context.Users
+					.Where(u => u.FamilyGroupId == HttpContext.GetFamilyGroupId())
+					.Select(u => u.Id);
+
+			var query = _context.Transactions.Where(t => familyGroupUserIds
+				.Contains(t.UserId) || (transactionFilter.UserIds != null && transactionFilter.UserIds.Contains(t.UserId)));
 
 			if (transactionFilter.CategoriesIds != null && transactionFilter.CategoriesIds.Count != 0)
 			{
@@ -28,7 +34,7 @@ namespace BudgetCalcAPI.Controllers
 
 			if (transactionFilter.TypesIds != null && transactionFilter.TypesIds.Count != 0)
 			{
-				query = query.Where(t => t.Category.TypeId.HasValue && transactionFilter.TypesIds.Contains(t.Category.TypeId.Value));
+				query = query.Where(t => transactionFilter.TypesIds.Contains(t.Category.TypeId));
 			}
 
 			if (transactionFilter.MaxDateTime != null)
@@ -44,16 +50,6 @@ namespace BudgetCalcAPI.Controllers
 			if (transactionFilter.UserIds != null && transactionFilter.UserIds.Count != 0)
 			{
 				query = query.Where(t => transactionFilter.UserIds.Contains(t.UserId));
-			}
-
-			if (transactionFilter.FamilyGroupId != null)
-			{
-				var familyGroupUserIds = _context.Users
-					.Where(u => u.FamilyGroupId == transactionFilter.FamilyGroupId)
-					.Select(u => u.Id);
-
-				query = query.Where(t => familyGroupUserIds
-				.Contains(t.UserId) || (transactionFilter.UserIds != null && transactionFilter.UserIds.Contains(t.UserId)));
 			}
 
 			if (transactionFilter.UserIds != null)
@@ -80,10 +76,21 @@ namespace BudgetCalcAPI.Controllers
 		public async Task<IActionResult> CreateTransaction([FromBody] Transaction transaction)
 		{
 			if (transaction == null)
-			{
 				return BadRequest("Transaction is null");
-			}
+			if (transaction.CategoryId == null)
+				return BadRequest("CategoryId is missing");
 
+			var category = await _context.TransactionCategories.Where(c => c.Id == transaction.CategoryId).SingleOrDefaultAsync();
+			if (category == null)
+				return NotFound("Invalid category");
+
+			var type = await _context.TransactionTypes.Where(type => type.Id == category.TypeId).SingleOrDefaultAsync();
+			if (type == null)
+				return NotFound("Invalid type");
+			if (type.OwnerId != HttpContext.GetFamilyGroupId())
+				return Unauthorized();
+
+			transaction.UserId = HttpContext.GetUserId();
 			_context.Transactions.Add(transaction);
 			await _context.SaveChangesAsync();
 			return Ok(transaction);

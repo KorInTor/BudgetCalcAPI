@@ -6,6 +6,10 @@ namespace BudgetCalcAPI.Model.Transactions
     public class TransactionType
     {
         public int Id { get; set; } = 0;
+
         public string Name { get; set; }
+
+        [Column("familygroup_owner_id")]
+        public int OwnerId { get; set; }
     }
 }

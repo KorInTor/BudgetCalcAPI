@@ -11,7 +11,7 @@ namespace BudgetCalcAPI.Model.Transactions
 
         [Column("type_id")]
         [ForeignKey("Type")]
-        public int? TypeId { get; set; }
+        public int TypeId { get; set; }
 
         public TransactionType? Type { get; set; }
     }

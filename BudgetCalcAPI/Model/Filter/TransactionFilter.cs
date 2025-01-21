@@ -5,7 +5,6 @@
 		public DateTimeOffset? MinDateTime { get; set; }
 		public DateTimeOffset? MaxDateTime { get; set; }
 		public List<int>? UserIds { get; set; }
-		public int? FamilyGroupId { get; set; }
 		public List<int>? CategoriesIds { get; set; }
 		public List<int>? TypesIds { get; set; }
 		public int Skip { get; set; } = 0;
