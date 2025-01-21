@@ -88,23 +88,5 @@ namespace BudgetCalcAPI.Controllers
 			await _context.SaveChangesAsync();
 			return Ok(transaction);
 		}
-
-		//[HttpDelete]
-		//public async Task<IActionResult> DeleteTransaction([FromBody] Transaction transaction)
-		//{
-		//	if (transaction == null || transaction.Id <= 0)
-		//	{
-		//		return BadRequest("Transaction is invalid");
-		//	}
-
-		//	if (_context.Entry(transaction).State == EntityState.Detached)
-		//	{
-		//		_context.Transactions.Attach(transaction);
-		//	}
-		//	_context.Transactions.Remove(transaction);
-		//	await _context.SaveChangesAsync();
-
-		//	return Ok();
-		//}
 	}
 }
